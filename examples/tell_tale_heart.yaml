@@ -1,0 +1,43 @@
+# Pronunciation Dictionary for "The Tell-Tale Heart"
+# by Edgar Allan Poe
+#
+# This file demonstrates ebook-tts's pronunciation override feature.
+# While this story doesn't have complex character names, it shows
+# how to handle common abbreviations and stylistic choices.
+
+version: 1
+language: en
+
+# Words - custom pronunciations for specific terms
+words:
+  # Archaic/literary terms Poe uses
+  hearken: "HAR-ken"
+  ere: "air"
+  waned: "wayned"
+  scantlings: "SKANT-lings"
+  suavity: "SWAH-vih-tee"
+  
+# Abbreviations - expand for natural speech
+abbreviations:
+  o'clock: "oh clock"
+  
+# Acronyms (none in this story, but shown for reference)
+acronyms: {}
+
+# Patterns - regex replacements for systematic fixes
+patterns:
+  # Convert em-dashes to pauses (helps TTS pacing)
+  - pattern: " — "
+    replacement: "... "
+  
+  # Poe's dramatic repetitions - add slight pause
+  - pattern: "louder!"
+    replacement: "louder..."
+    
+  # Handle the "Ha!" exclamations
+  - pattern: "Ha!"
+    replacement: "Hah!"
+    
+  # The famous ending exclamation
+  - pattern: "here, here!"
+    replacement: "here! here!"

@@ -1,0 +1,152 @@
+# Base English Pronunciation Dictionary
+# Common abbreviations, acronyms, and patterns for English text
+#
+# This dictionary is automatically loaded for English language detection.
+# User dictionaries are applied on top of this base.
+
+version: 1
+language: en
+
+# Common words that TTS often mispronounces
+words:
+  # Names that are commonly mispronounced
+  Nguyen: "win"
+  Siobhan: "shih-VAWN"
+  Niamh: "NEEV"
+  Saoirse: "SEER-sha"
+  Aoife: "EE-fa"
+  
+  # Technical terms
+  cache: "cash"
+  sudo: "SOO-doo"
+  nginx: "engine-X"
+  
+  # Commonly mispronounced English words
+  colonel: "KER-nel"
+  quinoa: "KEEN-wah"
+  acai: "ah-sah-EE"
+  gif: "gif"
+
+# Abbreviations - expand to full words
+abbreviations:
+  Mr.: "Mister"
+  Mrs.: "Missus"
+  Ms.: "Mizz"
+  Dr.: "Doctor"
+  Prof.: "Professor"
+  Jr.: "Junior"
+  Sr.: "Senior"
+  St.: "Saint"
+  Mt.: "Mount"
+  Rd.: "Road"
+  Ave.: "Avenue"
+  Blvd.: "Boulevard"
+  etc.: "et cetera"
+  e.g.: "for example"
+  i.e.: "that is"
+  vs.: "versus"
+  dept.: "department"
+  govt.: "government"
+  approx.: "approximately"
+  est.: "established"
+  inc.: "incorporated"
+  corp.: "corporation"
+  ltd.: "limited"
+  no.: "number"
+  vol.: "volume"
+  pg.: "page"
+  pp.: "pages"
+  ch.: "chapter"
+  fig.: "figure"
+  esp.: "especially"
+  misc.: "miscellaneous"
+  min.: "minutes"
+  hr.: "hour"
+  hrs.: "hours"
+  sec.: "seconds"
+  ft.: "feet"
+  in.: "inches"
+  lb.: "pounds"
+  lbs.: "pounds"
+  oz.: "ounces"
+  pt.: "pint"
+  qt.: "quart"
+  gal.: "gallon"
+  
+# Acronyms - how to pronounce letter combinations
+acronyms:
+  # Pronounced as words
+  NASA: "NASA"
+  NATO: "NAY-toh"
+  ASAP: "A-sap"
+  AWOL: "A-wall"
+  FAQ: "fack"
+  SCUBA: "SKOO-bah"
+  LASER: "LAY-zer"
+  RADAR: "RAY-dar"
+  GIF: "gif"
+  PIN: "pin"
+  SIM: "sim"
+  RAM: "ram"
+  ROM: "rom"
+  
+  # Spelled out
+  FBI: "F. B. I."
+  CIA: "C. I. A."
+  CEO: "C. E. O."
+  CFO: "C. F. O."
+  CTO: "C. T. O."
+  USA: "U. S. A."
+  UK: "U. K."
+  UN: "U. N."
+  EU: "E. U."
+  PhD: "P. H. D."
+  MBA: "M. B. A."
+  MD: "M. D."
+  RN: "R. N."
+  DIY: "D. I. Y."
+  ATM: "A. T. M."
+  GPS: "G. P. S."
+  USB: "U. S. B."
+  PDF: "P. D. F."
+  HTML: "H. T. M. L."
+  CSS: "C. S. S."
+  API: "A. P. I."
+  URL: "U. R. L."
+  AI: "A. I."
+  VR: "V. R."
+  AR: "A. R."
+  
+  # Custom pronunciations
+  SQL: "sequel"
+  GUI: "gooey"
+  JPEG: "JAY-peg"
+  WYSIWYG: "WIZ-ee-wig"
+
+# Patterns - regex-based replacements
+patterns:
+  # Convert common unit patterns
+  - pattern: '(\d+)km'
+    replacement: '\1 kilometers'
+  - pattern: '(\d+)mi'
+    replacement: '\1 miles'
+  - pattern: '(\d+)kg'
+    replacement: '\1 kilograms'
+  - pattern: '(\d+)mg'
+    replacement: '\1 milligrams'
+  - pattern: '(\d+)ml'
+    replacement: '\1 milliliters'
+
+  # Time patterns
+  - pattern: '(\d+):(\d+)\s*am'
+    replacement: '\1 \2 A.M.'
+  - pattern: '(\d+):(\d+)\s*pm'
+    replacement: '\1 \2 P.M.'
+
+  # Currency (basic)
+  - pattern: '\$(\d+)'
+    replacement: '\1 dollars'
+  - pattern: '€(\d+)'
+    replacement: '\1 euros'
+  - pattern: '£(\d+)'
+    replacement: '\1 pounds'

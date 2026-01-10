@@ -1,0 +1,57 @@
+# Claude Code
+.claude/
+CLAUDE.md
+AGENTS.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.conda/
+.conda-env/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Audio outputs (generated)
+*.wav
+*.mp3
+*.m4b
+
+# PDF inputs (user data)
+*.pdf
+
+# Extracted text (generated)
+*.txt
+!requirements.txt
+
+# Pip install artifacts
+=*
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
