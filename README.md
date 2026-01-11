@@ -17,6 +17,7 @@ Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 54 pre-built voices.
   - [Pronunciation Dictionaries](#pronunciation-dictionaries)
   - [Text Extraction](#text-extraction)
   - [Other Commands](#other-commands)
+  - [Checkpoint/Resume](#checkpointresume)
 - [Voices](#voices)
 - [Docker](#docker)
 - [Development](#development)
@@ -48,6 +49,7 @@ ebook-tts list-voices
 - **CPU fallback** - Works without GPU at 1-2x real-time
 - **Pronunciation dictionaries** - Custom word pronunciations via YAML files
 - **Streaming output** - Memory-efficient processing for long books
+- **Checkpoint/Resume** - Resume interrupted conversions without losing progress
 
 ## Installation
 
@@ -192,6 +194,27 @@ ebook-tts convert --input book.pdf --output ch1-3.wav --chapters 1,2,3
 ebook-tts convert --input book.pdf --output test.wav --mock
 ```
 
+### Checkpoint/Resume
+
+For long books, enable checkpointing to resume interrupted conversions:
+
+```bash
+# Enable checkpoint (creates .book.wav.checkpoint/ directory)
+ebook-tts convert --input book.pdf --output book.wav --checkpoint
+
+# Resume an interrupted conversion (automatically detects existing checkpoint)
+ebook-tts convert --input book.pdf --output book.wav --checkpoint
+
+# Discard existing checkpoint and start fresh
+ebook-tts convert --input book.pdf --output book.wav --checkpoint --force
+```
+
+The checkpoint system:
+- Saves progress after each synthesized chunk
+- Caches audio chunks to avoid re-synthesis
+- Validates input file hash and settings to ensure consistency
+- Automatically cleans up checkpoint directory on successful completion
+
 ### Direct Text-to-Audio
 
 ```bash
@@ -321,6 +344,7 @@ PDF/EPUB → Extractor → ChapterDetector → TextPreprocessor → TextChunker
 | `TextChunker` | Split text at sentence boundaries |
 | `KokoroSynthesizer` | Kokoro TTS wrapper |
 | `StreamingAudioWriter` | Memory-efficient audio output |
+| `CheckpointManager` | Resumable conversion state management |
 
 ### Library Usage
 
