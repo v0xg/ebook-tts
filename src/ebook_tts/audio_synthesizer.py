@@ -80,9 +80,15 @@ class KokoroSynthesizer:
 
     def _load_pipeline(self) -> None:
         """Load the Kokoro pipeline."""
+        import os
+
+        # Force CPU mode if specified (must be set before importing torch)
+        if self.device == "cpu":
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
         from kokoro import KPipeline
 
-        self._pipeline = KPipeline(lang_code=self._lang_code)
+        self._pipeline = KPipeline(lang_code=self._lang_code, device=self.device)
 
     def set_voice(
         self,

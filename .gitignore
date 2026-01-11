@@ -38,6 +38,7 @@ env/
 # Extracted text (generated)
 *.txt
 !requirements.txt
+!requirements-api.txt
 
 # Pip install artifacts
 =*
@@ -55,3 +56,9 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Runtime data (database, uploads, outputs)
+data/
+
+# Documentation (generated)
+docs/

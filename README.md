@@ -1,10 +1,10 @@
 # eBook TTS
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![TTS](https://img.shields.io/badge/TTS-Kokoro--82M-orange.svg)
 
-Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 54 pre-built voices.
+Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 22 pre-built voices.
 
 ## Table of Contents
 
@@ -20,6 +20,7 @@ Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 54 pre-built voices.
   - [Checkpoint/Resume](#checkpointresume)
 - [Voices](#voices)
 - [Docker](#docker)
+- [REST API](#rest-api)
 - [Development](#development)
 - [Architecture](#architecture)
 - [License](#license)
@@ -42,7 +43,7 @@ ebook-tts list-voices
 
 ## Features
 
-- **54 pre-built voices** - American, British, and international accents
+- **22 pre-built voices** - American, British, Spanish, French, Japanese, and Chinese accents
 - **Chapter detection** - Automatic chapter markers from TOC or patterns (English/Spanish)
 - **Multiple formats** - WAV, MP3, M4B with embedded chapter markers
 - **GPU acceleration** - 10-15x real-time on NVIDIA GPUs
@@ -57,7 +58,7 @@ ebook-tts list-voices
 
 | Requirement | Purpose |
 |------------|---------|
-| Python 3.10-3.12 | Runtime |
+| Python 3.10+ | Runtime |
 | `espeak-ng` | Phoneme generation (required) |
 | `ffmpeg` | MP3/M4B output (optional) |
 | NVIDIA GPU | Faster inference (optional) |
@@ -231,16 +232,28 @@ ebook-tts text-to-wav --input text.txt --output audio.wav --preprocess --dict my
 |-------|----------|---------|-------------|
 | `af_heart` | American English | A | Best quality female |
 | `af_bella` | American English | A- | Warm female |
-| `af_nicole` | American English | B | Clear female |
-| `af_sarah` | American English | B | Natural female |
-| `am_adam` | American English | B | Neutral male |
-| `am_michael` | American English | C+ | Deeper male |
+| `af_nicole` | American English | - | Clear female |
+| `af_sarah` | American English | - | Natural female |
+| `af_sky` | American English | - | Sky |
+| `am_adam` | American English | - | Neutral male |
+| `am_michael` | American English | - | Michael |
+| `am_fenrir` | American English | - | Fenrir |
+| `am_puck` | American English | - | Puck |
 | `bf_emma` | British English | B- | British female |
-| `bf_isabella` | British English | B | Elegant female |
-| `bm_george` | British English | B- | British male |
-| `bm_lewis` | British English | B | Clear male |
+| `bf_isabella` | British English | - | Elegant female |
+| `bf_alice` | British English | - | Alice |
+| `bm_george` | British English | - | British male |
+| `bm_lewis` | British English | - | Clear male |
+| `bm_daniel` | British English | - | Daniel |
+| `ef_dora` | Spanish | - | Spanish female |
+| `em_alex` | Spanish | - | Spanish male |
+| `ff_siwis` | French | B- | French female |
+| `jf_alpha` | Japanese | - | Japanese female |
+| `jm_kumo` | Japanese | - | Japanese male |
+| `zf_xiaobei` | Chinese | - | Chinese female |
+| `zm_yunjian` | Chinese | - | Chinese male |
 
-Run `ebook-tts list-voices` for all 54 voices.
+Run `ebook-tts list-voices` for the full list with descriptions.
 
 ### Voice Naming Convention
 
@@ -267,6 +280,45 @@ docker run --gpus all -v $(pwd):/data ebook-tts convert \
   --input /data/book.pdf \
   --output /data/book.wav
 ```
+
+## REST API
+
+An optional FastAPI service for remote conversions with job queuing and cloud storage support.
+
+### Installation
+
+```bash
+pip install -e ".[api]"
+```
+
+### Running the Server
+
+```bash
+# Development
+uvicorn ebook_tts.api.main:app --reload
+
+# Production
+uvicorn ebook_tts.api.main:app --host 0.0.0.0 --port 8000
+```
+
+### Key Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | Create account |
+| `/api/v1/auth/token` | POST | Get JWT token |
+| `/api/v1/convert/` | POST | Submit conversion job |
+| `/api/v1/convert/{job_id}` | GET | Check job status |
+| `/api/v1/voices/` | GET | List available voices |
+
+### Docker
+
+```bash
+docker build -f Dockerfile.api -t ebook-tts-api .
+docker run -p 8000:8000 -e EBOOK_TTS_USE_LOCAL_STORAGE=true ebook-tts-api
+```
+
+See `CLAUDE.md` for environment variables and detailed configuration.
 
 ## Development
 
@@ -303,19 +355,27 @@ ruff check --fix .
 ```
 ebook-tts/
 ├── src/ebook_tts/
-│   ├── cli.py              # CLI interface
-│   ├── converter.py        # Main orchestrator
-│   ├── pdf_extractor.py    # PDF text extraction
-│   ├── epub_extractor.py   # EPUB text extraction
-│   ├── chapter_detector.py # Chapter detection
-│   ├── text_preprocessor.py# Text cleaning for TTS
-│   ├── text_chunker.py     # Text splitting
-│   ├── audio_synthesizer.py# TTS wrapper
-│   ├── audio_writer.py     # Audio output
+│   ├── cli.py               # CLI interface
+│   ├── converter.py         # Main orchestrator
+│   ├── pdf_extractor.py     # PDF text extraction
+│   ├── epub_extractor.py    # EPUB text extraction
+│   ├── chapter_detector.py  # Chapter detection
+│   ├── text_preprocessor.py # Text cleaning for TTS
+│   ├── text_chunker.py      # Text splitting
+│   ├── audio_synthesizer.py # TTS wrapper
+│   ├── audio_writer.py      # Audio output
 │   ├── pronunciation_dict.py# Custom dictionaries
-│   └── utils.py            # Utilities
-├── tests/                  # Test suite
-├── examples/               # Sample dictionaries
+│   ├── checkpoint.py        # Resumable conversion state
+│   ├── progress.py          # Progress tracking
+│   ├── utils.py             # Utilities
+│   └── api/                 # REST API (optional)
+│       ├── main.py          # FastAPI app
+│       ├── config.py        # Settings
+│       ├── routers/         # API endpoints
+│       ├── services/        # Business logic
+│       └── db/              # Database models
+├── tests/                   # Test suite
+├── examples/                # Sample dictionaries
 └── pyproject.toml
 ```
 

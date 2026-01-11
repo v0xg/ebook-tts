@@ -2,6 +2,9 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/ebook_tts"]
+
 [project]
 name = "ebook-tts"
 version = "1.0.0"
@@ -56,6 +59,19 @@ dev = [
     "pytest-cov>=4.0",
     "ruff>=0.1",
 ]
+api = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.6",
+    "email-validator>=2.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt==4.0.1",
+    "sqlalchemy>=2.0",
+    "boto3>=1.34.0",
+    "pydantic-settings>=2.1.0",
+    "psycopg2-binary>=2.9.9",
+]
 
 [project.scripts]
 ebook-tts = "ebook_tts.cli:cli"
@@ -81,6 +97,7 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
+    "B008",  # function call in default argument (required for FastAPI Depends)
 ]
 
 [tool.pytest.ini_options]

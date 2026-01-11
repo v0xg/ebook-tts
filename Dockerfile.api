@@ -1,4 +1,7 @@
-# Dockerfile for eBook TTS - PDF to Audiobook Converter
+# Dockerfile.api - FastAPI server for ebook-tts
+#
+# Build: docker build -f Dockerfile.api -t ebook-tts-api .
+# Run:   docker run -p 8000:8000 ebook-tts-api
 
 FROM python:3.10-slim AS builder
 
@@ -7,16 +10,18 @@ ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 WORKDIR /app
 
-# Copy package files
-COPY pyproject.toml README.md LICENSE ./
+# Copy dependency files
+COPY pyproject.toml README.md ./
+COPY requirements-api.txt ./
 COPY src/ ./src/
 
-# Install the package into a staged prefix with CPU-only torch wheels
+# Install Python dependencies into a staged prefix with CPU-only torch wheels
 RUN printf "torch==%s+cpu\ntorchaudio==%s+cpu\n" "$TORCH_VERSION" "$TORCH_VERSION" > /tmp/constraints-cpu.txt && \
     pip install --no-cache-dir --prefix=/install \
     --extra-index-url ${PYTORCH_INDEX_URL} \
     -c /tmp/constraints-cpu.txt \
-    .
+    . && \
+    pip install --no-cache-dir --prefix=/install -r requirements-api.txt
 
 FROM python:3.10-slim AS runtime
 
@@ -35,13 +40,21 @@ COPY --from=builder /install /install
 COPY docker/entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
-# Create non-root user for security
-RUN useradd -m -u 1000 converter && \
-    mkdir -p /app/output /app/models && \
-    chown -R converter:converter /app
-USER converter
+# Copy source code
+COPY src/ ./src/
 
-# Cache/model directories in a volume
+# Create data directory for SQLite
+RUN mkdir -p /app/data /app/models
+
+# Create non-root user for security
+RUN useradd -m -u 1000 apiuser && \
+    chown -R apiuser:apiuser /app
+USER apiuser
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV EBOOK_TTS_TTS_DEVICE=cpu
+ENV EBOOK_TTS_DATABASE_URL=sqlite:///./data/ebook_tts.db
 ENV XDG_CACHE_HOME=/app/models/.cache
 ENV HF_HOME=/app/models/hf
 ENV HF_HUB_CACHE=/app/models/hf/hub
@@ -51,10 +64,9 @@ ENV PATH=/install/bin:$PATH
 ENV PYTHONPATH=/install/lib/python3.10/site-packages
 VOLUME ["/app/models"]
 
-# Set default entrypoint
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["ebook-tts", "--help"]
+# Expose port
+EXPOSE 8000
 
-# Usage examples:
-# docker build -t ebook-tts .
-# docker run -v $(pwd)/books:/app/input -v $(pwd)/output:/app/output ebook-tts convert --input /app/input/book.pdf --output /app/output/book.wav --mock
+# Run with uvicorn
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["uvicorn", "ebook_tts.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

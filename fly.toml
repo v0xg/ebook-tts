@@ -1,0 +1,62 @@
+# fly.toml - Fly.io deployment configuration for ebook-tts API
+#
+# Deploy with:
+#   fly launch --no-deploy
+#   fly volumes create data --size 1 --region iad
+#   fly secrets set EBOOK_TTS_JWT_SECRET_KEY=$(openssl rand -hex 32)
+#   fly secrets set EBOOK_TTS_S3_ENDPOINT_URL=https://xxx.r2.cloudflarestorage.com
+#   fly secrets set EBOOK_TTS_S3_ACCESS_KEY_ID=your-key
+#   fly secrets set EBOOK_TTS_S3_SECRET_ACCESS_KEY=your-secret
+#   fly secrets set EBOOK_TTS_S3_BUCKET_NAME=ebook-tts
+#   fly deploy
+
+app = "ebook-tts-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.api"
+
+[env]
+  EBOOK_TTS_TTS_DEVICE = "cpu"
+  EBOOK_TTS_MAX_CONCURRENT_JOBS = "1"
+  EBOOK_TTS_DATABASE_URL = "sqlite:///./data/ebook_tts.db"
+  EBOOK_TTS_DEBUG = "false"
+  EBOOK_TTS_PREFETCH_MODEL = "0"
+  EBOOK_TTS_USE_LOCAL_STORAGE = "true"
+  EBOOK_TTS_LOCAL_STORAGE_PATH = "/app/data/uploads"
+  XDG_CACHE_HOME = "/app/data/models/.cache"
+  HF_HOME = "/app/data/models/hf"
+  HF_HUB_CACHE = "/app/data/models/hf/hub"
+  TORCH_HOME = "/app/data/models/torch"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 25
+    soft_limit = 20
+
+[[http_service.checks]]
+  interval = "60s"
+  timeout = "30s"
+  grace_period = "120s"
+  method = "GET"
+  path = "/health"
+
+# Mount volume for SQLite database persistence
+[[mounts]]
+  source = "data"
+  destination = "/app/data"
+
+# VM configuration
+# Note: TTS model requires ~500MB+ RAM. 256MB will OOM.
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
