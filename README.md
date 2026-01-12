@@ -6,38 +6,11 @@
 
 Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 22 pre-built voices.
 
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Basic Conversion](#basic-conversion)
-  - [Voice Selection](#voice-selection)
-  - [Pronunciation Dictionaries](#pronunciation-dictionaries)
-  - [Text Extraction](#text-extraction)
-  - [Other Commands](#other-commands)
-  - [Checkpoint/Resume](#checkpointresume)
-- [Voices](#voices)
-- [Docker](#docker)
-- [REST API](#rest-api)
-- [Development](#development)
-- [Architecture](#architecture)
-- [License](#license)
-
 ## Quick Start
 
 ```bash
-# Install
 pip install .
-
-# Convert PDF/EPUB to audiobook
 ebook-tts convert --input book.pdf --output book.wav
-
-# Convert EPUB to audiobook
-ebook-tts convert --input book.epub --output book.wav
-
-# List available voices
 ebook-tts list-voices
 ```
 
@@ -63,28 +36,14 @@ ebook-tts list-voices
 | `ffmpeg` | MP3/M4B output (optional) |
 | NVIDIA GPU | Faster inference (optional) |
 
-EPUB support uses `ebooklib` and `beautifulsoup4` (installed via pip).
-Use `numpy<2` to avoid compatibility issues with TTS dependencies.
-
-### Install from source
-
 ```bash
-git clone https://github.com/v0xg/ebook-tts.git
-cd ebook-tts
-pip install .
-```
+# From source
+git clone https://github.com/v0xg/ebook-tts.git && cd ebook-tts && pip install .
 
-### Install from GitHub
-
-```bash
+# Or directly from GitHub
 pip install git+https://github.com/v0xg/ebook-tts.git
-```
 
-### GPU Setup (Optional)
-
-For NVIDIA GPUs, ensure PyTorch with CUDA is installed:
-
-```bash
+# GPU support (optional)
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
@@ -163,36 +122,16 @@ patterns:
 
 See `examples/base_en.yaml` for a complete example.
 
-### Text Extraction
-
-```bash
-# Extract raw text
-ebook-tts extract --input book.pdf --output book.txt
-
-# Extract with preprocessing
-ebook-tts extract --input book.pdf --output book.txt --processed
-
-# Include metadata
-ebook-tts extract --input book.pdf --output book.txt --processed --include-meta
-
-# With custom dictionary
-ebook-tts extract --input book.pdf --output book.txt --processed --dict my_dict.yaml
-```
-
 ### Other Commands
 
 ```bash
-# List detected chapters
-ebook-tts chapters --input book.pdf
-
-# Preview processed text
-ebook-tts preview --input book.pdf --chars 2000
-
-# Convert specific chapters only
-ebook-tts convert --input book.pdf --output ch1-3.wav --chapters 1,2,3
-
-# Test mode (no GPU required)
-ebook-tts convert --input book.pdf --output test.wav --mock
+ebook-tts extract --input book.pdf --output book.txt        # Extract text
+ebook-tts extract --input book.pdf --output book.txt --processed  # With preprocessing
+ebook-tts chapters --input book.pdf                         # List chapters
+ebook-tts preview --input book.pdf --chars 2000             # Preview text
+ebook-tts text-to-wav --input text.txt --output audio.wav   # Text file to audio
+ebook-tts convert --input book.pdf --output ch1-3.wav --chapters 1,2,3  # Specific chapters
+ebook-tts convert --input book.pdf --output test.wav --mock # Test mode (no GPU)
 ```
 
 ### Checkpoint/Resume
@@ -200,235 +139,52 @@ ebook-tts convert --input book.pdf --output test.wav --mock
 For long books, enable checkpointing to resume interrupted conversions:
 
 ```bash
-# Enable checkpoint (creates .book.wav.checkpoint/ directory)
-ebook-tts convert --input book.pdf --output book.wav --checkpoint
-
-# Resume an interrupted conversion (automatically detects existing checkpoint)
-ebook-tts convert --input book.pdf --output book.wav --checkpoint
-
-# Discard existing checkpoint and start fresh
-ebook-tts convert --input book.pdf --output book.wav --checkpoint --force
-```
-
-The checkpoint system:
-- Saves progress after each synthesized chunk
-- Caches audio chunks to avoid re-synthesis
-- Validates input file hash and settings to ensure consistency
-- Automatically cleans up checkpoint directory on successful completion
-
-### Direct Text-to-Audio
-
-```bash
-# Convert text file to audio
-ebook-tts text-to-wav --input text.txt --output audio.wav
-
-# With preprocessing and custom dictionary
-ebook-tts text-to-wav --input text.txt --output audio.wav --preprocess --dict my_dict.yaml
+ebook-tts convert --input book.pdf --output book.wav --checkpoint         # Enable
+ebook-tts convert --input book.pdf --output book.wav --checkpoint         # Resume (auto-detects)
+ebook-tts convert --input book.pdf --output book.wav --checkpoint --force # Start fresh
 ```
 
 ## Voices
 
-| Voice | Language | Quality | Description |
-|-------|----------|---------|-------------|
-| `af_heart` | American English | A | Best quality female |
-| `af_bella` | American English | A- | Warm female |
-| `af_nicole` | American English | - | Clear female |
-| `af_sarah` | American English | - | Natural female |
-| `af_sky` | American English | - | Sky |
-| `am_adam` | American English | - | Neutral male |
-| `am_michael` | American English | - | Michael |
-| `am_fenrir` | American English | - | Fenrir |
-| `am_puck` | American English | - | Puck |
-| `bf_emma` | British English | B- | British female |
-| `bf_isabella` | British English | - | Elegant female |
-| `bf_alice` | British English | - | Alice |
-| `bm_george` | British English | - | British male |
-| `bm_lewis` | British English | - | Clear male |
-| `bm_daniel` | British English | - | Daniel |
-| `ef_dora` | Spanish | - | Spanish female |
-| `em_alex` | Spanish | - | Spanish male |
-| `ff_siwis` | French | B- | French female |
-| `jf_alpha` | Japanese | - | Japanese female |
-| `jm_kumo` | Japanese | - | Japanese male |
-| `zf_xiaobei` | Chinese | - | Chinese female |
-| `zm_yunjian` | Chinese | - | Chinese male |
+22 voices available across American, British, Spanish, French, Japanese, and Chinese. Run `ebook-tts list-voices` for the full list.
 
-Run `ebook-tts list-voices` for the full list with descriptions.
+**Recommended:** `af_heart` (American female), `bf_emma` (British female), `am_adam` (American male)
 
-### Voice Naming Convention
-
-- First letter: Language (`a`=American, `b`=British, `e`=Spanish, etc.)
-- Second letter: Gender (`f`=female, `m`=male)
-- Name: Character name
+**Naming convention:** `[lang][gender]_[name]` where lang is `a`=American, `b`=British, `e`=Spanish, etc. and gender is `f`/`m`.
 
 ## Docker
 
 ```bash
-# Build
 docker build -t ebook-tts .
-
-# List voices
-docker run ebook-tts list-voices
-
-# Convert (mount volume for files)
-docker run -v $(pwd):/data ebook-tts convert \
-  --input /data/book.pdf \
-  --output /data/book.wav
-
-# With GPU support
-docker run --gpus all -v $(pwd):/data ebook-tts convert \
-  --input /data/book.pdf \
-  --output /data/book.wav
+docker run -v $(pwd):/data ebook-tts convert --input /data/book.pdf --output /data/book.wav
+docker run --gpus all -v $(pwd):/data ebook-tts convert --input /data/book.pdf --output /data/book.wav  # GPU
 ```
 
 ## REST API
 
-An optional FastAPI service for remote conversions with job queuing and cloud storage support.
-
-### Installation
+Optional FastAPI service for remote conversions with job queuing and cloud storage.
 
 ```bash
 pip install -e ".[api]"
-```
-
-### Running the Server
-
-```bash
-# Development
 uvicorn ebook_tts.api.main:app --reload
-
-# Production
-uvicorn ebook_tts.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Key Endpoints
+**Endpoints:** `/api/v1/auth/register`, `/api/v1/auth/token`, `/api/v1/convert/`, `/api/v1/voices/`
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/auth/register` | POST | Create account |
-| `/api/v1/auth/token` | POST | Get JWT token |
-| `/api/v1/convert/` | POST | Submit conversion job |
-| `/api/v1/convert/{job_id}` | GET | Check job status |
-| `/api/v1/voices/` | GET | List available voices |
-
-### Docker
-
+**Docker:**
 ```bash
 docker build -f Dockerfile.api -t ebook-tts-api .
 docker run -p 8000:8000 -e EBOOK_TTS_USE_LOCAL_STORAGE=true ebook-tts-api
 ```
 
-See `CLAUDE.md` for environment variables and detailed configuration.
+See `CLAUDE.md` for environment variables and configuration.
 
 ## Development
 
-### Setup
-
 ```bash
-git clone https://github.com/v0xg/ebook-tts.git
-cd ebook-tts
-pip install -e ".[dev]"
-```
-
-### Testing
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# With coverage
-pytest tests/ -v --cov=src/ebook_tts
-
-# Run specific test file
-pytest tests/test_preprocessor.py -v
-```
-
-### Linting
-
-```bash
-ruff check .
-ruff check --fix .
-```
-
-### Project Structure
-
-```
-ebook-tts/
-├── src/ebook_tts/
-│   ├── cli.py               # CLI interface
-│   ├── converter.py         # Main orchestrator
-│   ├── pdf_extractor.py     # PDF text extraction
-│   ├── epub_extractor.py    # EPUB text extraction
-│   ├── chapter_detector.py  # Chapter detection
-│   ├── text_preprocessor.py # Text cleaning for TTS
-│   ├── text_chunker.py      # Text splitting
-│   ├── audio_synthesizer.py # TTS wrapper
-│   ├── audio_writer.py      # Audio output
-│   ├── pronunciation_dict.py# Custom dictionaries
-│   ├── checkpoint.py        # Resumable conversion state
-│   ├── progress.py          # Progress tracking
-│   ├── utils.py             # Utilities
-│   └── api/                 # REST API (optional)
-│       ├── main.py          # FastAPI app
-│       ├── config.py        # Settings
-│       ├── routers/         # API endpoints
-│       ├── services/        # Business logic
-│       └── db/              # Database models
-├── tests/                   # Test suite
-├── examples/                # Sample dictionaries
-└── pyproject.toml
-```
-
-## Architecture
-
-### Pipeline Flow
-
-```
-PDF/EPUB → Extractor → ChapterDetector → TextPreprocessor → TextChunker
-                                              ↓
-                                    PronunciationDict (optional)
-                                              ↓
-                              KokoroSynthesizer → StreamingAudioWriter → Output
-```
-
-### Key Components
-
-| Component | Purpose |
-|-----------|---------|
-| `PDFToAudiobook` | Main converter orchestrator |
-| `PDFExtractor` | Extract text/TOC from PDFs |
-| `EPUBExtractor` | Extract text/TOC from EPUBs |
-| `ChapterDetector` | Detect chapters from TOC or patterns |
-| `TextPreprocessor` | Clean text for TTS (ligatures, abbreviations) |
-| `PronunciationDict` | Load custom pronunciation rules |
-| `TextChunker` | Split text at sentence boundaries |
-| `KokoroSynthesizer` | Kokoro TTS wrapper |
-| `StreamingAudioWriter` | Memory-efficient audio output |
-| `CheckpointManager` | Resumable conversion state management |
-
-### Library Usage
-
-```python
-from ebook_tts import PDFToAudiobook, PronunciationDict
-
-# Basic conversion
-converter = PDFToAudiobook()
-result = converter.convert("book.pdf", "book.wav")
-print(f"Duration: {result.duration_seconds}s")
-
-# With custom dictionary
-converter = PDFToAudiobook(
-    dictionary_path="my_dict.yaml",
-    voice="bf_emma",
-)
-result = converter.convert("book.pdf", "book.wav")
-
-# Progress callback
-def on_progress(update):
-    print(f"{update.stage}: {update.percent:.0f}%")
-
-converter = PDFToAudiobook(progress_callback=on_progress)
-converter.convert("book.pdf", "book.wav")
+pip install -e ".[dev]"      # Install with dev dependencies
+pytest tests/ -v             # Run tests
+ruff check .                 # Lint
 ```
 
 ## License
