@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
         description=(
             "Convert ebooks (PDF/EPUB) to audiobooks using Kokoro TTS.\n\n"
             "## Features\n"
-            "- 54 pre-built voices in multiple languages\n"
+            "- 22 pre-built voices in multiple languages\n"
             "- Background processing with progress tracking\n"
             "- Chapter detection and selective conversion\n"
             "- Multiple output formats: WAV, MP3, M4B\n\n"

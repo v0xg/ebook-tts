@@ -516,9 +516,9 @@ def demo():
 @cli.command("list-voices")
 @click.option(
     "--lang", "-l",
-    type=click.Choice(["a", "b", "e", "f", "j", "z", "h", "i", "p"]),
+    type=click.Choice(["a", "b", "e", "f", "j", "z"]),
     default=None,
-    help="Filter by language: a=American, b=British, e=Spanish, f=French, j=Japanese, z=Chinese, h=Hindi, i=Italian, p=Portuguese",
+    help="Filter by language: a=American, b=British, e=Spanish, f=French, j=Japanese, z=Chinese",
 )
 def list_voices(lang: str):
     """List available Kokoro voices."""
@@ -535,9 +535,6 @@ def list_voices(lang: str):
         "f": "French",
         "j": "Japanese",
         "z": "Chinese",
-        "h": "Hindi",
-        "i": "Italian",
-        "p": "Portuguese",
     }
 
     voices = KokoroSynthesizer.list_voices_by_language(lang)

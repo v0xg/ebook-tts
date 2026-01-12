@@ -189,7 +189,7 @@ uvicorn ebook_tts.api.main:app --reload  # Swagger UI at http://localhost:8000/d
 
 **Endpoints:**
 - `POST /api/v1/auth/register` — Create account
-- `POST /api/v1/auth/token` — Get JWT token
+- `POST /api/v1/auth/login` — Get JWT token
 - `POST /api/v1/convert/` — Submit conversion job
 - `GET /api/v1/convert/jobs/{id}` — Poll job status
 - `GET /api/v1/convert/jobs/{id}/events` — Stream progress (SSE)

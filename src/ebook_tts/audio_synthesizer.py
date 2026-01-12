@@ -63,7 +63,7 @@ class KokoroSynthesizer:
             return KOKORO_VOICES[voice][0]
         # Infer from voice name prefix
         prefix = voice[:1] if voice else "a"
-        lang_map = {"a": "a", "b": "b", "e": "e", "f": "f", "j": "j", "z": "z", "h": "h", "i": "i", "p": "p"}
+        lang_map = {"a": "a", "b": "b", "e": "e", "f": "f", "j": "j", "z": "z"}
         return lang_map.get(prefix, "a")
 
     @property
