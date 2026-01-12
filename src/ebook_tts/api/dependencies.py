@@ -2,7 +2,7 @@
 
 from typing import Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, Header, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -102,3 +102,64 @@ def get_current_user_optional(
         pass
 
     return None
+
+
+def get_current_user_flexible(
+    token: str | None = Query(None, description="JWT token for SSE clients"),
+    access_token: str | None = Cookie(None),
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> User:
+    """
+    Flexible authentication for SSE endpoints.
+
+    Accepts JWT from multiple sources (for EventSource compatibility):
+    - Query param: ?token=<jwt>
+    - Cookie: access_token=<jwt>
+    - Header: Authorization: Bearer <jwt>
+    """
+    # Try to extract token from available sources
+    jwt_token = token or access_token
+    if not jwt_token and authorization and authorization.startswith("Bearer "):
+        jwt_token = authorization.split(" ", 1)[1]
+
+    if not jwt_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            jwt_token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        user_id: str = payload.get("sub")
+        token_type: str = payload.get("type")
+
+        if user_id is None or token_type != "access":
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception from None
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise credentials_exception
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled",
+        )
+
+    return user

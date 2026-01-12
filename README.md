@@ -184,10 +184,29 @@ Optional FastAPI service for remote conversions with job queuing and cloud stora
 
 ```bash
 pip install -e ".[api]"
-uvicorn ebook_tts.api.main:app --reload
+uvicorn ebook_tts.api.main:app --reload  # Swagger UI at http://localhost:8000/docs
 ```
 
-**Endpoints:** `/api/v1/auth/register`, `/api/v1/auth/token`, `/api/v1/convert/`, `/api/v1/voices/`
+**Endpoints:**
+- `POST /api/v1/auth/register` — Create account
+- `POST /api/v1/auth/token` — Get JWT token
+- `POST /api/v1/convert/` — Submit conversion job
+- `GET /api/v1/convert/jobs/{id}` — Poll job status
+- `GET /api/v1/convert/jobs/{id}/events` — Stream progress (SSE)
+- `GET /api/v1/voices/` — List available voices
+
+### Real-time Progress (SSE)
+
+Stream job progress without polling using Server-Sent Events:
+
+```javascript
+const es = new EventSource(`/api/v1/convert/jobs/${jobId}/events?token=${jwt}`);
+es.addEventListener('progress', e => {
+  const data = JSON.parse(e.data);
+  console.log(`${data.stage}: ${data.progress_percent}%`);
+});
+es.addEventListener('done', e => es.close());
+```
 
 **Docker:**
 ```bash

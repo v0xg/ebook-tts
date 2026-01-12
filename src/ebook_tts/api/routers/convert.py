@@ -1,20 +1,102 @@
 """Conversion router for ebook-to-audiobook conversion jobs."""
 
+import asyncio
+import json
+import time
 from pathlib import Path
+from typing import AsyncGenerator
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..db.models import User
-from ..dependencies import get_current_user, get_db
+from ..db.models import Job, JobStatus, User
+from ..dependencies import get_current_user, get_current_user_flexible, get_db
 from ..models.job import JobCreate, JobResponse, UploadResponse
 from ..services.job_service import JobService
 from ..services.storage_service import StorageService, get_storage_service
 from ..services.worker_service import WorkerService
 
 router = APIRouter(prefix="/convert", tags=["Conversion"])
+
+
+# === SSE Helper Functions ===
+
+
+def _format_sse(data: dict, event: str = "message") -> str:
+    """Format data as a Server-Sent Event."""
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+async def _job_events_generator(
+    job_id: str,
+    user_id: str,
+    db: Session,
+    poll_interval: float = 0.5,
+    heartbeat_interval: float = 15.0,
+) -> AsyncGenerator[str, None]:
+    """
+    Async generator that yields SSE events for job progress.
+
+    Polls the database for changes and yields events when progress updates.
+    Sends heartbeat comments to keep the connection alive.
+    Terminates when job reaches a terminal state.
+    """
+    last_state = None
+    last_heartbeat = time.time()
+
+    while True:
+        # Refresh session to get latest data
+        db.expire_all()
+
+        job = db.query(Job).filter(Job.id == job_id, Job.user_id == user_id).first()
+        if not job:
+            yield _format_sse({"error": "Job not found"}, event="error")
+            return
+
+        # Check if state changed
+        current_state = (
+            job.status,
+            job.stage,
+            job.progress_percent,
+            job.current_chunk,
+            job.message,
+        )
+
+        if current_state != last_state:
+            yield _format_sse(
+                {
+                    "status": job.status.value if job.status else None,
+                    "stage": job.stage,
+                    "progress_percent": job.progress_percent,
+                    "current_chunk": job.current_chunk,
+                    "total_chunks": job.total_chunks,
+                    "message": job.message,
+                },
+                event="progress",
+            )
+            last_state = current_state
+            last_heartbeat = time.time()
+
+        # Check for terminal state
+        if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
+            # Send done event with final info
+            done_data = {"status": job.status.value}
+            if job.status == JobStatus.COMPLETED:
+                done_data["duration_seconds"] = job.duration_seconds
+                done_data["chapters_count"] = job.chapters_count
+            elif job.status == JobStatus.FAILED:
+                done_data["error_message"] = job.error_message
+            yield _format_sse(done_data, event="done")
+            return
+
+        # Send heartbeat if no updates for a while
+        if time.time() - last_heartbeat > heartbeat_interval:
+            yield ": heartbeat\n\n"
+            last_heartbeat = time.time()
+
+        await asyncio.sleep(poll_interval)
 
 
 @router.get(
@@ -145,6 +227,58 @@ def get_job_status(
         )
 
     return job
+
+
+@router.get(
+    "/jobs/{job_id}/events",
+    summary="Stream job progress (SSE)",
+    response_class=StreamingResponse,
+)
+async def stream_job_events(
+    job_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_flexible),
+):
+    """
+    Stream job progress via Server-Sent Events.
+
+    This endpoint provides real-time progress updates without polling.
+    The connection stays open until the job completes, fails, or is cancelled.
+
+    **Authentication options** (EventSource doesn't support custom headers):
+    - Query param: `?token=<jwt>`
+    - Cookie: `access_token=<jwt>`
+    - Header: `Authorization: Bearer <jwt>`
+
+    **Event types:**
+    - `progress`: Job progress update (status, stage, percent, chunks)
+    - `done`: Job completed/failed/cancelled (includes final status)
+    - `error`: Error occurred (job not found, etc.)
+
+    **Example (JavaScript):**
+    ```javascript
+    const es = new EventSource(`/api/v1/convert/jobs/${jobId}/events?token=${jwt}`);
+    es.addEventListener('progress', e => console.log(JSON.parse(e.data)));
+    es.addEventListener('done', e => { console.log('Done:', e.data); es.close(); });
+    ```
+    """
+    # Verify job exists and belongs to user
+    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    return StreamingResponse(
+        _job_events_generator(job_id, current_user.id, db),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )
 
 
 @router.get(
