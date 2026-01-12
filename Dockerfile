@@ -16,7 +16,9 @@ RUN printf "torch==%s+cpu\ntorchaudio==%s+cpu\n" "$TORCH_VERSION" "$TORCH_VERSIO
     pip install --no-cache-dir --prefix=/install \
     --extra-index-url ${PYTORCH_INDEX_URL} \
     -c /tmp/constraints-cpu.txt \
-    .
+    . && \
+    pip install --no-cache-dir --prefix=/install \
+    https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 
 FROM python:3.10-slim AS runtime
 
