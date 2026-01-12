@@ -1,10 +1,20 @@
-# eBook TTS
+# ebook-tts
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![TTS](https://img.shields.io/badge/TTS-Kokoro--82M-orange.svg)
 
-Convert PDF/EPUB ebooks to audiobooks using Kokoro TTS with 22 pre-built voices.
+**A local-first, resumable pipeline for converting ebooks into audiobooks using TTS.**
+
+---
+
+- A **long-running job pipeline** for ebook → audio conversion
+- Designed to handle **large books** without restarting from scratch
+- **Local-first**: no uploads, no subscriptions, no accounts
+- Built to be **inspectable, deterministic, and automation-friendly**
+- Packaged as a CLI, with an optional API wrapper
+
+---
 
 ## Quick Start
 
@@ -16,14 +26,22 @@ ebook-tts list-voices
 
 ## Features
 
-- **22 pre-built voices** - American, British, Spanish, French, Japanese, and Chinese accents
-- **Chapter detection** - Automatic chapter markers from TOC or patterns (English/Spanish)
-- **Multiple formats** - WAV, MP3, M4B with embedded chapter markers
-- **GPU acceleration** - 10-15x real-time on NVIDIA GPUs
-- **CPU fallback** - Works without GPU at 1-2x real-time
-- **Pronunciation dictionaries** - Custom word pronunciations via YAML files
-- **Streaming output** - Memory-efficient processing for long books
-- **Checkpoint/Resume** - Resume interrupted conversions without losing progress
+- **PDF & EPUB extraction**
+- **Chapter detection** (TOC + heuristics, EN/ES)
+- **Local TTS synthesis** (Kokoro, 22 voices)
+- **Checkpoint & resume** for long-running jobs
+- **Streaming output** (WAV, MP3, M4B)
+- **Chapter markers & metadata**
+- **Custom pronunciation dictionaries** (YAML)
+- **CPU-first**, optional GPU acceleration
+
+## Design principles
+
+This project intentionally favors reliability and clarity over raw performance:
+
+- **Reliability over speed** — jobs should finish correctly, even if they take longer.
+- **Determinism over throughput** — the same input and configuration should produce the same output.
+- **Debuggability over cleverness** — clear stages, explicit state, and readable checkpoints.
 
 ## Installation
 
@@ -186,6 +204,16 @@ pip install -e ".[dev]"      # Install with dev dependencies
 pytest tests/ -v             # Run tests
 ruff check .                 # Lint
 ```
+
+## Models & Third-Party Dependencies
+
+This project does not bundle TTS models or system binaries.
+
+- TTS models (Kokoro) are subject to their own licenses
+- `ffmpeg`, `espeak-ng`, and GPU drivers must be installed separately
+- Users are responsible for complying with the licenses of all dependencies
+
+The project's role is orchestration — not model distribution.
 
 ## License
 
